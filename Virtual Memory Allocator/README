@@ -1,0 +1,131 @@
+**Birladeanu Raluca-Monica**
+**315CA**
+
+## Virtual Memory Allocator Tema 1
+
+### Description and structures used
+This project focused on the implementation of a virtual memory allocator,
+having an arena as a virtual space for the memory blocks to exist in. 
+In the arena, there is an alloc_list which points to a doubly linked list whose
+nodes contain the structure for the block, in which I saved the start_address,
+the size and a pointer to the first and last miniblocks. The miniblock 
+structure contains a multitude of fields, such as: start address, size, perm,
+rw_buffer (in which the text is stored), permissions_changed, as well as two
+pointers, next and prev, which allow for going through the miniblocks. 
+
+## List implementation
+	The program uses doubly linked lists in each implementation, for which
+I wrote a few useful functions that will be briefly explained below:
+	-> create_list - returns a pointer to the list, initializes all the
+fields in the list
+	-> create_node - returns a pointer to the node, initializes its fields
+	-> push - adds a node in the n-th position of the list, making sure to
+handle all limit cases
+	-> pop - deletes a node from the n-th position of the list
+	-> free_list - frees the list by always deleting the first node
+
+## Arena functions
+	-> alloc_arena - returns a pointer to the arena. Allocates space for it
+and initializes all its fields
+	
+	-> dealloc_arena - goes through each block and then through each
+miniblock and frees everything, while also freeing the space allocated for the
+list afterwards
+	
+	-> alloc_block - has some additional functions, such as:
+	
+	- init_block - initializes a block
+	- init_miniblock - initializez a miniblock
+	- out_of_bounds - checks each error case, making sure the address is
+	valid. If it encounters an error, returns 0, otherwise, 1. 
+	
+	The function goes through each block and when it finds a valid address
+it checks for different cases. If we add a block right after one that is
+already allocated, it makes sure to bind those blocks into a single one, doing
+the same if it adds a block right before the next one. 
+	If two blocks are bound together, the block_number count gets
+decremented, and if we just add a separate block, it gets incremented.
+Additionally, there is a separate case for when we add the first block in the
+list, if the index is 0. 
+	
+	-> free_block - frees the miniblock at the specified address
+	The function goes through each block and checks if we are in a valid
+block. In that case, we check if there if a single miniblock in the block. In 
+that case, we have to free both the block and the miniblock, so the program
+checks whether or not the block we want to free is the first one in our list,
+so it can update the head in the positive case. 
+	If we have more miniblocks, we go through them till we encounter a
+valid address and the function will act accordingly for each case: miniblock
+in the middle - since we have to split the contigous block in two miniblock -,
+last miniblock - making sure to update the tail pointer -, and first miniblock
+making sure to update the start address.
+	
+	->read - the read function first goes through each miniblock of the
+corresponding block and checks if every miniblock has read permissions. If one
+of them doesn't, it prints invalid permissions for read and exits the function.
+	If we have read permissions, we go through each miniblock again and 
+first determine how many bytes to read from the buffer: either the whole buffer
+or the left bytes. We concatenate to buffer to our final text, making sure to
+start from the specified offset. 
+	We then increment the read_bytes variable by the number of bytes we had
+to read, and also decrement the left_bytes we still have to read. If we have no
+more miniblocks and we still have bytes to read, we print how many bytes
+we read. 
+
+	->write - the write function works similarily to read, first checking
+if we have valid permissions.
+	If we do, we go through each miniblock and determine how many bytes we
+still have to write. We copy data into the buffer starting from the given
+address, making sure we always start writing the message from where we left off
+after writing part of the message in the previous miniblock.
+	We increment the written_bytes and decrement the ones left to read and
+print how many bytes were written if we have no more miniblocks to write into. 
+
+	->pmap - prints information about the arena using the fields of the
+structure, and then goes through each block and miniblock to print their info
+
+	- permissions - function used to print the permissions in the specified
+	format
+	
+	->mprotect - goes through each miniblock and changes permissions. 
+Uses the field permissions_changed to keep track of whether or not the function
+was called with more parameters. If it was called with only one parameter, it
+overwrites the permission. Otherwise, it overwrites the permissions only at the
+first call, incrementing them after. 
+
+	- m_permissions - turns the permissions from written format to digits
+	- change_permissions - when the function is called, it changes the
+permissions_changed parameter to symbolize that mprotect was called with more
+parameters. After the last mprotect call for that miniblock, the
+permissions_changed variable is reset.
+
+## Notes
+	With this project, I can say that I learnt the importance of using 
+calloc instead of malloc in certain instances, or using memset when
+initializing a character string in order to make all its bytes 0 and make sure
+there are no non-printable characters (gibberish) left in there. 
+
+Thanks for reading, I hope you have a great day!
+/) /)  
+( . . )     have a flower♡
+(  づ🌷
+
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⡴⠚⠋⢹⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠖⠋⠁⠀⠀⠀⢸⠃⠀⠀⠀⣠⣤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠞⠁⠀⠀⠀⠀⠀⢠⠟⠀⣀⡴⠋⡁⠸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⠃⣰⠀⠀⠀⠀⠀⣠⢏⡤⠞⢁⡴⠋⠀⠀⡇⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣧⠀⡇⠀⠀⠀⠀⣴⠿⠋⣠⠞⠁⠀⠀⠀⣸⠛⠛⠛⠛⠲⢦⣄⡀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⠖⠻⣦⡧⠀⠀⣤⠞⠁⣠⠞⠁⠀⠀⠀⣀⡴⠃⠀⠀⠀⠀⠀⠀⠈⠙⢦⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⠏⠀⠀⠀⠀⠃⠀⠀⠀⠀⠀⣿⣤⣤⡴⠶⠞⠻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⡄⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⣆⠀
+⣠⣶⣤⣀⡀⠀⠀⠀⠀⠀⢠⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⡤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⡀
+⢿⣄⠈⠁⣽⠀⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣇
+⠈⠛⠓⠚⠋⠀⠀⠀⠀⠀⢸⡇⢰⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣷⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⠁⠘⣷⠘⣿⣿⠅⠀⢷⡴⠀⠀⠀⠀⠘⣿⣿⡇⠈⣳⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇
+⠀⠀⠀⠀⠀⠀⠀⢠⠤⠒⢲⡟⠃⠈⠁⠀⠀⠈⠁⠀⠀⠀⠀⠀⠙⠋⠣⠼⢛⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢷⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠇
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢯⠙⠛⠒⠖⠚⠛⠛⠷⠦⠤⠤⠤⠴⠋⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⠏⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠾⠋⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣻⣦⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡶⣿⠀⢀⣉⡏⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠙⠛⠛⠚⠉⠉⠙⠛⠛⠛⠛⠛⠓⠚⠛⠋⠙⠓⠛⠒⠓⠋⠀⠀⠀⠀⠀⠀
